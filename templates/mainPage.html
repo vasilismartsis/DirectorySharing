@@ -1,0 +1,214 @@
+{% extends 'content.html' %}
+
+{% block head %}
+
+<head>
+    <style>
+        .gallery {
+            text-align: center;
+        }
+
+        .gallery>img {
+            width: 100px;
+            opacity: .8;
+        }
+
+        .gallery>img:hover {
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .imgContainer {
+            padding-top: 10px;
+        }
+
+        .thumb {
+            height: 200px;
+            /* width: 160px; */
+            margin: 10px;
+            padding: 2px;
+            box-shadow: 2px 2px 4px rgba(70, 70, 70, 0.6);
+            border: 2px solid white;
+        }
+
+        .thumbChecked {
+            opacity: .8;
+            height: 200px;
+            /* width: 160px; */
+            margin: 10px;
+            padding: 2px;
+            box-shadow: 2px 2px 4px rgba(70, 70, 70, 0.6);
+        }
+
+        .thumb:hover {
+            box-shadow: 3px 3px 6px rgba(70, 70, 70, 0.8);
+            cursor: pointer;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            /* Green */
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        .button1 {
+            background-color: white;
+            color: black;
+            border: 2px solid #008CBA;
+            position: relative;
+            left: 50%;
+            -ms-transform: translateX(-50%);
+            transform: translateX(-50%);
+        }
+
+        .button1:hover {
+            background-color: #008CBA;
+            color: white;
+        }
+
+        .download {
+            display: none;
+        }
+    </style>
+</head>
+{% endblock %}
+
+{% block main %}
+{% if allLists %}
+{% if allLists["fileList"].__len__() != 0 %}
+<button class="button button1" onclick="downloadAllMedia()">Download all media in the current folder</button>
+{% endif %}
+
+<button class="download button button1" onclick="generateZIP()">Download selected media</button>
+
+<ul id="folderList">
+    {% for directory in allLists["directoryList"] %}
+    <li>
+        <a class="btn btn-info" href="{{ url_for('index', previousName=directory, previousPath=newPath) }}"
+            style="margin-top: 15px;">
+            {{directory}}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="gallery">
+    <div id="imgContainer" class="imgContainer">
+        {% for file in allLists["fileList"] %}
+        {% if file.lower().endswith('jpg') or file.lower().endswith('jpeg')%}
+        <img id="{{ file }}" class="thumb" realSrc="{{ url_for('upload', fileName=file, previousPath=newPath) }}"
+            src="{{ url_for('upload', fileName=file, previousPath=thumbnailPath) }}">
+        {% else %}
+        <img id="{{ file }}" class="thumb" realSrc="{{ url_for('upload', fileName=file, previousPath=newPath) }}"
+            src="{{ url_for('upload', fileName=file[:-3] + 'gif', previousPath=thumbnailPath) }}">
+        <!-- <video id="{{ file }}" type="video/mp4" realSrc="{{ url_for('upload', fileName=file, previousPath=newPath) }}"
+            src="{{ url_for('upload', fileName=file[:-3] + 'gif', previousPath=thumbnailPath) }}" muted="true"
+            autoplay="" loop="" class="thumb">
+        </video> -->
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block script %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.0.2/jszip-utils.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+<script src="static/js/asynchronousRequest.js"></script>
+
+<script>
+    var ids = [];
+    var links = [];
+
+    $('.gallery').on('click', '.thumb', function ()
+    {
+        $(this).removeClass().addClass('thumbChecked');
+        $(this).css("border", "2px solid #c32032");
+        links.push($(this).attr('realSrc'));
+        ids.push($(this).attr('id'));
+
+        if (links.length != 0)
+            $('.download').css("display", "block");
+    });
+
+    $('.gallery').on('click', '.thumbChecked', function ()
+    {
+        $(this).removeClass().addClass('thumb');
+        $(this).css("border", "2px solid white");
+        var linkToRemove = $(this).attr('realSrc');
+        links.splice($.inArray(linkToRemove, links), 1);
+        var idToRemove = $(this).attr('realSrc');
+        ids.splice($.inArray(idToRemove, links), 1);
+
+        if (links.length == 0)
+            $('.download').css("display", "none");
+    });
+
+    function generateZIP(downloadAll = false)
+    {
+        var zip = new JSZip();
+        var count = 0;
+        var zipFilename = "Pictures.zip";
+
+        links.forEach(function (url, i)
+        {
+            var filename = ids[i];
+            // loading a file and add it in a zip file
+            JSZipUtils.getBinaryContent(url, function (err, data)
+            {
+                if (err)
+                    throw err; // or handle the error
+                zip.file(filename, data, { binary: true });
+                count++;
+                if (count == links.length)
+                    zip.generateAsync({ type: 'blob' }).then(function (content)
+                    {
+                        saveAs(content, zipFilename);
+                    });
+            });
+        });
+    }
+
+    function downloadAllMedia()
+    {
+        "{% if allLists %}"
+        "{% for file in allLists['fileList'] %}"
+        links.push("{{ url_for('upload', fileName=file, previousPath=newPath) }}".replace("amp;", ""));
+        ids.push("{{ file }}".replace("amp;", ""));
+        "{% endfor %}"
+        "{% endif %}"
+
+        generateZIP(true);
+    }
+
+    function emptyLists()
+    {
+        links = [];
+        ids = [];
+    }
+
+    imageMiddleClickFunctionality();
+    function imageMiddleClickFunctionality()
+    {
+        var container = document.getElementById("imgContainer").childNodes;
+        for (child of container)
+            child.addEventListener('mousedown', function (e)
+            {
+                if (e.button == 1)
+                    window.open(e.target.getAttribute("realSrc"));
+            })
+    }
+</script>
+{% endblock %}

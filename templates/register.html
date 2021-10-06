@@ -1,0 +1,31 @@
+{% extends 'content.html' %}
+{% block main %}
+<div id="status" style="text-align: center;">
+    {% if status == "success" %}
+    <div id="status" style="color: green;">
+        <h2><u>User added successfully</u></h2>
+    </div>
+    {% elif status == "usernameAlreadyExists" %}
+    <div id="status" style="color: red;">
+        <h2><u>Username already exists!</u></h2>
+    </div>
+    {% endif %}
+</div>
+
+{% if "username" in session %}
+<div id="status" style="color: red; text-align: center;">
+    <h2><u>You are already logged in!</u></h2>
+</div>
+{% else %}
+<form action="addUser" method="POST" style="text-align: center; margin-bottom: 25%;">
+    <h1 style="padding-top: 5%;"><b>REGISTER</b></h1>
+    <label for="username">Username:</label>
+    <input type="text" id="Username..." name="username" placeholder="username...">
+    <br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" placeholder="password...">
+    <br><br>
+    <button type="submit">Create Account</button>
+</form>
+{% endif %}
+{% endblock %}

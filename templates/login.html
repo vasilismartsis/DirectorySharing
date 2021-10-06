@@ -1,0 +1,41 @@
+{% extends 'content.html' %}
+{% block main %}
+<div id="status" style="text-align: center;">
+    {% if status == "passwordNotCorrect" %}
+    <div id="status" style="color: red;">
+        <h2><u>The password is not correct!</u></h2>
+    </div>
+    {% elif status == "userNotFound" %}
+    <div id="status" style="color: red;">
+        <h2><u>Username not found!</u></h2>
+    </div>
+    {% endif %}
+</div>
+
+{% if "username" in session %}
+<div id="status" style="color: red; text-align: center;">
+    <h2><u>You are already loged in!</u></h2>
+</div>
+{% else %}
+<form action="checkUser" method="POST" style="text-align: center; margin-bottom: 25%;">
+    <h1 style="padding-top: 5%;"><b>LOGIN</b></h1>
+    <label for="username">Username:</label>
+    <input type="text" id="Username..." name="username" placeholder="username...">
+    <br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" placeholder="password...">
+    <br><br>
+    <button type="submit">Login</button>
+    <button type="button" onclick="loadRegisterPage()">Register</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+    function loadRegisterPage()
+    {
+        window.open("/register", "_self")
+    }
+</script>
+{% endblock %}
