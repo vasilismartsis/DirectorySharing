@@ -30,4 +30,4 @@ def upload():
 if __name__ == "__main__":
     db.create_all()
     app.debug = True
-    app.run(host='0.0.0.0', port=5005, use_reloader=True)
+    app.run(host='0.0.0.0', port=5001, use_reloader=True)
